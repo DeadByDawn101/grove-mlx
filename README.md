@@ -179,6 +179,62 @@ Add `--logs` to any command to see raw log output instead of the dashboard.
 |----------|--------|
 | `GROVE_NO_WIFI` | Skip WiFi upgrade probe, use AWDL only |
 
+## Exo Cluster Integration (Star Platinum)
+
+Grove-MLX includes direct integration with [exo](https://github.com/exo-explore/exo)
+distributed inference clusters. Zero-config discovery + adaptive compression tuned for
+Apple Silicon TB4/WiFi hybrid topologies.
+
+### Quick Start
+
+```python
+from grove.exo_bridge import ExoGroveWorld, ExoAutoResearch
+
+# Auto-discover exo nodes
+world = ExoGroveWorld()
+nodes = world.get_node_addresses()
+
+# Run autoresearch to find optimal transfer params
+research = ExoAutoResearch(nodes)
+best_config = research.run(n_rounds=3)
+print(f"Best config: {best_config}")
+
+# Use winning config for training
+from grove.exo_bridge import ExoSparseSyncOptimizer
+optimizer = ExoSparseSyncOptimizer(model, benchmark_results=best_config)
+```
+
+### CLI
+
+```bash
+# Run autoresearch on the cluster
+grove research --nodes 4 --rounds 3 --save grove_best_config.json
+```
+
+### Bandwidth-Adaptive Compression
+
+| Link Type | Bandwidth | Config | H | topk | DCT |
+|-----------|-----------|--------|---|------|-----|
+| TB4 direct | >10 Gbps | tb4-direct | 20 | 512 | Off |
+| TB4 TCP/IP | >10 Gbps | tb4-raw | 50 | 256 | Off |
+| WiFi 6 | 1-10 Gbps | wifi-dct | 200 | 64 | On |
+| Slow link | <1 Gbps | slow-link | 500 | 16 | On |
+
+### Why Autoresearch Finds Better Params
+
+Manual tuning usually fails because:
+1. **Theoretical specs ≠ actual bandwidth** — TB4 can do 40Gbps but TCP/IP overhead cuts it significantly
+2. **Parameter interactions are complex** — chunk_size × topk × DCT all affect throughput differently
+3. **Stability matters** — fastest config isn't best if gradients diverge
+
+ExoAutoResearch runs a tournament:
+- Tests 6 parameter configurations across multiple rounds
+- Measures actual throughput, compression ratio, and gradient stability
+- Scores each config: `score = throughput × √compression × stability`
+- Promotes the winner to production
+
+The result is empirically optimal parameters for your specific hardware and network topology.
+
 ## Requirements
 
 - macOS with Apple Silicon (M1+)

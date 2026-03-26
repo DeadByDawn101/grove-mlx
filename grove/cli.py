@@ -324,6 +324,39 @@ def cmd_status(_args):
     console.print()
 
 
+def cmd_research(args):
+    """Run autoresearch to find optimal transfer params for this cluster."""
+    from rich.console import Console
+    from .exo_bridge import ExoGroveWorld, ExoAutoResearch
+
+    console = Console()
+    console.print(f"\n  [bold]grove research[/]  discovering exo cluster...")
+
+    # Discover nodes
+    world = ExoGroveWorld(exo_url=args.exo_url)
+    nodes = world.get_node_addresses()
+
+    if args.nodes:
+        nodes = nodes[:args.nodes]
+
+    console.print(f"  [green]found {len(nodes)} nodes:[/] {', '.join(nodes)}")
+    console.print()
+
+    # Run autoresearch
+    research = ExoAutoResearch(nodes, save_path=args.save)
+    best_config = research.run(n_rounds=args.rounds)
+
+    # Save best config separately if requested
+    if args.save != "grove_research_results.json":
+        best_config_path = args.save.replace("_results", "_best").replace(".json", "_best.json")
+    else:
+        best_config_path = "grove_best_config.json"
+    research.save_config(best_config, best_config_path)
+
+    console.print(f"\n  [green]Best config saved to:[/] {best_config_path}")
+    console.print(f"  [dim]Use with:[/] ExoSparseSyncOptimizer(model, benchmark_results=ExoAutoResearch.load_best_config())")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="grove", description="grove — distributed ML for Apple Silicon")
     sub = parser.add_subparsers(dest="command")
@@ -344,12 +377,19 @@ def main():
 
     sub.add_parser("status", help="System info and nearby clusters")
 
+    research_p = sub.add_parser("research", help="Find optimal transfer params for this cluster")
+    research_p.add_argument("--nodes", "-n", type=int, default=None, help="Number of nodes to test (default: all discovered)")
+    research_p.add_argument("--rounds", "-r", type=int, default=3, help="Number of rounds per config (default: 3)")
+    research_p.add_argument("--save", type=str, default="grove_research_results.json", help="Path to save results")
+    research_p.add_argument("--exo-url", type=str, default="http://localhost:52415", help="exo API URL")
+
     args = parser.parse_args()
     match args.command:
         case "run": cmd_run(args)
         case "start": cmd_start(args)
         case "join": cmd_join(args)
         case "status": cmd_status(args)
+        case "research": cmd_research(args)
         case _: parser.print_help()
 
 
