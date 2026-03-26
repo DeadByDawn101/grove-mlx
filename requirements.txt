@@ -1,0 +1,16 @@
+# Grove-MLX Requirements
+# Distributed ML training for Apple Silicon
+
+# Core dependencies
+numpy>=1.24
+mlx>=0.5
+
+# Networking / peer discovery
+zeroconf>=0.131
+
+# CLI / UI
+rich>=13
+textual>=0.50
+
+# Development
+pytest>=7

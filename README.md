@@ -1,6 +1,11 @@
-# grove
+# Grove-MLX
 
-Distributed ML training across MacBooks. Zero config.
+[![Tests](https://img.shields.io/badge/tests-40%20passed-brightgreen)](https://github.com/DeadByDawn101/grove-mlx/actions)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-M1%2FM2%2FM3%2FM4-orange.svg)](https://support.apple.com/en-us/HT211814)
+
+**Distributed ML training across MacBooks. Zero config.**
 
 ```bash
 pip install grove-ml
